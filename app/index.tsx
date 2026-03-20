@@ -268,7 +268,7 @@ export default function Index() {
             <View style={styles.statCard}>
               <MaterialCommunityIcons name="cloud" size={28} color="#FFD700" />
               <AnimatedNumber value={40501} style={styles.statValue} />
-              <Text style={styles.statLabel}>Altitude (ft)</Text>
+              <Text style={styles.statLabel}>Max Altitude (ft)</Text>
             </View>
             <View style={styles.statCard}>
               <MaterialCommunityIcons name="medal" size={28} color="#FFD700" />
