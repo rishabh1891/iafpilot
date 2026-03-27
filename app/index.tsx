@@ -20,6 +20,7 @@ const AnimatedNumber = ({ value, style, prefix = '', suffix = '' }: { value: num
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
+    let animationFrameId: number;
     let startTimestamp: number | null = null;
     const duration = 1500;
 
@@ -27,15 +28,17 @@ const AnimatedNumber = ({ value, style, prefix = '', suffix = '' }: { value: num
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 4); // Ease out quart
-      
+
       setDisplayValue(Math.floor(ease * value));
-      
+
       if (progress < 1) {
-        requestAnimationFrame(step);
+        animationFrameId = requestAnimationFrame(step);
       }
     };
-    
-    requestAnimationFrame(step);
+
+    animationFrameId = requestAnimationFrame(step);
+
+    return () => cancelAnimationFrame(animationFrameId);
   }, [value]);
 
   return <Text style={style}>{prefix}{displayValue.toLocaleString()}{suffix}</Text>;
@@ -86,12 +89,211 @@ const StatRing = ({ percent, label, color }: { percent: number; label: string; c
   );
 };
 
+const HealthRings = ({ steps, speed, stairs }: { steps: number; speed: number; stairs: number }) => {
+  const ringData = [
+    { progress: steps / 10000, color: '#FF2D55', radius: 35 }, // Steps (Goal 10k)
+    { progress: speed / 3, color: '#AEEA00', radius: 25 },     // Speed (Goal 3kmh)
+    { progress: stairs / 4, color: '#00D084', radius: 15 },    // Stairs (Goal 4 floors)
+  ];
+
+  return (
+    <View style={styles.healthRingsContainer}>
+      <Svg width={100} height={100} viewBox="0 0 100 100">
+        <G rotation="-90" origin="50, 50">
+          {ringData.map((ring, i) => (
+            <React.Fragment key={i}>
+              <Circle
+                cx="50"
+                cy="50"
+                r={ring.radius}
+                stroke="rgba(255,255,255,0.1)"
+                strokeWidth={8}
+                fill="transparent"
+              />
+              <AnimatedCircle
+                cx="50"
+                cy="50"
+                r={ring.radius}
+                stroke={ring.color}
+                strokeWidth={8}
+                fill="transparent"
+                strokeDasharray={2 * Math.PI * ring.radius}
+                strokeDashoffset={2 * Math.PI * ring.radius * (1 - Math.min(ring.progress, 0.99))}
+                strokeLinecap="round"
+              />
+            </React.Fragment>
+          ))}
+        </G>
+      </Svg>
+      <View style={styles.healthRingsLegend}>
+        <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#FF2D55' }]} /><Text style={styles.legendText}>Steps</Text></View>
+        <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#AEEA00' }]} /><Text style={styles.legendText}>Speed</Text></View>
+        <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#00D084' }]} /><Text style={styles.legendText}>Stairs</Text></View>
+      </View>
+    </View>
+  );
+};
+
+const CACCard = ({ title, name, dept, desig, idLabel, idValue, qrUrl, instructions, color, shadowColor, dob, bloodGroup, validTill, issuedAt, onPressQr }: any) => {
+  return (
+    <View style={[styles.cacCard, { borderColor: color, shadowColor: shadowColor, shadowOpacity: 0.8 }]}>
+      {/* Stylish Background Elements */}
+      <View style={styles.cacBgGlow} />
+      <Image 
+        source={{ uri: 'https://i.ibb.co/r25fHMWK/roundiaflogo.png' }} 
+        style={styles.cacWatermark} 
+        resizeMode="contain" 
+      />
+      
+      {/* Inner Border Shine */}
+      <View style={[styles.cacInnerBorder, { borderColor: color, opacity: 0.3 }]} pointerEvents="none" />
+
+      {/* Card Gloss Effect */}
+      <View style={styles.cacGloss} pointerEvents="none" />
+
+      {/* Card Header */}
+      <View style={styles.cacHeader}>
+        <View style={styles.headerLogoBg}>
+          <Image source={{ uri: 'https://i.ibb.co/gM3vnqG7/mainlogo.png' }} style={styles.cacLogoSmall} />
+        </View>
+        <View style={styles.cacTitleContainer}>
+          <Text style={styles.cacHeaderText}>INDIAN AIR FORCE</Text>
+          <Text style={styles.cacHeaderHindi}>भारतीय वायु सेना</Text>
+        </View>
+        <Image source={{ uri: 'https://i.ibb.co/r25fHMWK/roundiaflogo.png' }} style={styles.cacLogoSmall} resizeMode="contain" />
+      </View>
+
+      <Text style={[styles.cacTypeTitle, { color }]}>{title}</Text>
+
+      {/* Card Body */}
+      <View style={styles.cacBody}>
+        <Image source={{ uri: 'https://i.ibb.co/4ZmttBFL/IMG-0135.jpg' }} style={[styles.cacProfileImg, { borderColor: color }]} />
+        
+        <View style={styles.cacDataSection}>
+          <View style={styles.cacDataItem}>
+            <Text style={styles.cacDataLabel}>Name:-</Text>
+            <Text style={styles.cacDataValue}>{name}</Text>
+          </View>
+          <View style={styles.cacDataItem}>
+            <Text style={styles.cacDataLabel}>DOB:-</Text>
+            <Text style={styles.cacDataValue}>{dob}</Text>
+          </View>
+          <View style={styles.cacDataItem}>
+            <Text style={styles.cacDataLabel}>Blood Grp:-</Text>
+            <Text style={[styles.cacDataValue, { color }]}>{bloodGroup}</Text>
+          </View>
+          <View style={styles.cacDataItem}>
+            <Text style={styles.cacDataLabel}>Department:-</Text>
+            <Text style={styles.cacDataValue}>{dept}</Text>
+          </View>
+          <View style={styles.cacDataItem}>
+            <Text style={styles.cacDataLabel}>Designation:-</Text>
+            <Text style={styles.cacDataValue}>{desig}</Text>
+          </View>
+          <View style={styles.cacDataItem}>
+            <Text style={styles.cacDataLabel}>{idLabel} -</Text>
+            <Text style={[styles.cacDataValue, { color }]}>{idValue}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity onPress={onPressQr} activeOpacity={0.7} style={styles.qrContainer}>
+          <Image source={{ uri: qrUrl }} style={styles.cacQrCode} />
+          <Text style={[styles.tapToZoom, { color }]}>TAP TO ZOOM</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Additional Card Details */}
+      <View style={styles.cacExtraInfo}>
+        <View style={styles.cacExtraItem}>
+          <Text style={styles.cacExtraLabel}>Issued At:</Text>
+          <Text style={styles.cacExtraValue}>{issuedAt}</Text>
+        </View>
+        <View style={styles.cacExtraItem}>
+          <Text style={styles.cacExtraLabel}>Valid Till:</Text>
+          <Text style={styles.cacExtraValue}>{validTill}</Text>
+        </View>
+      </View>
+
+      {/* Card Footer */}
+      <View style={styles.cacFooter}>
+        <View style={styles.signatureContainer}>
+          <Image 
+            source={{ uri: 'https://i.ibb.co/xtvv3XMD/apsign.png' }} 
+            style={styles.signatureImage} 
+            resizeMode="contain" 
+            tintColor="#166bc1"
+          />
+          <View style={styles.signatureLine} />
+          <Text style={styles.signatureLabel}>Digital Signature of Authority</Text>
+        </View>
+        <Text style={styles.cacInstTitle}>Instructions:</Text>
+        {instructions.map((inst: string, idx: number) => (
+          <Text key={idx} style={styles.cacInstText}>• {inst}</Text>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+import React from 'react';
+
 export default function Index() {
   const [modalVisible, setModalVisible] = useState(true);
   const [profileImageVisible, setProfileImageVisible] = useState(false);
   const [airId, setAirId] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+
+  // QR Modal State
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [selectedQrUrl, setSelectedQrUrl] = useState('');
+
+  const handleQrPress = (url: string) => {
+    setSelectedQrUrl(url);
+    setQrModalVisible(true);
+  };
+
+  // Health Data State
+  const [healthData, setHealthData] = useState({
+    steps: 0,
+    speed: 0,
+    stairs: 0,
+    sleep: "05hr 28m",
+    condition: "Fit"
+  });
+
+  const generateDailyData = () => {
+    const steps = Math.floor(Math.random() * (10000 - 4000 + 1)) + 4000;
+    const speed = parseFloat((Math.random() * (3 - 1) + 1).toFixed(1));
+    const stairs = Math.floor(Math.random() * (4 - 3 + 1)) + 3;
+    
+    setHealthData({
+      steps,
+      speed,
+      stairs,
+      sleep: "05hr 28m",
+      condition: steps < 4500 ? "Lazy" : "Fit"
+    });
+  };
+
+  useEffect(() => {
+    generateDailyData();
+
+    // Logic to reset every 24 hours at midnight
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setHours(24, 0, 0, 0);
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    const timeoutId = setTimeout(() => {
+      generateDailyData();
+      // Then repeat every 24 hours
+      const intervalId = setInterval(generateDailyData, 24 * 60 * 60 * 1000);
+      return () => clearInterval(intervalId);
+    }, msUntilMidnight);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const handleSubmit = () => {
     if (airId === '24657463') {
@@ -480,7 +682,102 @@ export default function Index() {
                 <Text style={styles.medicalStatus}>Excellent - Last checked 15 Mar 2025</Text>
               </View>
             </View>
+
+            {/* Dynamic Health Rings & Data */}
+            <View style={styles.dynamicHealthSection}>
+              <HealthRings steps={healthData.steps} speed={healthData.speed} stairs={healthData.stairs} />
+              
+              <View style={styles.healthStatsContainer}>
+                <Text style={styles.healthStatText}>Daily Average sleep: <Text style={styles.healthStatValue}>{healthData.sleep}</Text></Text>
+                <View style={styles.healthGrid}>
+                  <View style={styles.healthGridItem}>
+                    <Text style={styles.healthGridLabel}>Step Count</Text>
+                    <Text style={styles.healthGridValue}>{healthData.steps.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.healthGridItem}>
+                    <Text style={styles.healthGridLabel}>Walking Speed</Text>
+                    <Text style={styles.healthGridValue}>{healthData.speed} kmh</Text>
+                  </View>
+                </View>
+                <Text style={styles.healthStatText}>Stairs Climb: <Text style={styles.healthStatValue}>{healthData.stairs} floors</Text></Text>
+                <Text style={styles.healthStatText}>Current Condition: 
+                  <Text style={[styles.healthStatValue, { color: healthData.condition === 'Lazy' ? '#FF4D4D' : '#00D084' }]}> {healthData.condition}</Text>
+                </Text>
+              </View>
+            </View>
           </View>
+        </Animated.View>
+
+        {/* Common Access Cards (CACs) */}
+        <Animated.View entering={FadeInDown.delay(1000).duration(600)} style={styles.cacSection}>
+          <Text style={styles.cacSectionTitle}>Common Access Cards (CACs)</Text>
+          <Text style={styles.cacSubtitle}>Indian Air Force Competency Cards</Text>
+
+          <CACCard
+            title="Air Force Personnel Card"
+            name="Rishabh Tripathi"
+            dept="Pilot"
+            desig="First Officer"
+            idLabel="Air Force No."
+            idValue="24657463"
+            qrUrl="https://i.ibb.co/sJjNV0dj/QR-1.png"
+            dob="12/05/1998"
+            bloodGroup="B+"
+            validTill="31 DEC 2035"
+            issuedAt="AF Station Yelahanka"
+            onPressQr={() => handleQrPress("https://i.ibb.co/sJjNV0dj/QR-1.png")}
+            color="#38BDF8"
+            shadowColor="rgba(56, 189, 248, 0.6)"
+            instructions={[
+              "Return the ID card if lost or found to your nearest Air Force Station.",
+              "You have to show this ID card once asked by any Air Force Officials.",
+              "You can't use this ID card for personal privilege or at any public places."
+            ]}
+          />
+
+          <CACCard
+            title="Health Care Card"
+            name="Rishabh Tripathi"
+            dept="Cargo"
+            desig="First Officer"
+            idLabel="Policy No."
+            idValue="HUJ58653"
+            qrUrl="https://i.ibb.co/7tkH9f8f/QR-2.png"
+            dob="12/05/1998"
+            bloodGroup="B+"
+            validTill="31 DEC 2027"
+            issuedAt="Medical Wing, IAF"
+            onPressQr={() => handleQrPress("https://i.ibb.co/7tkH9f8f/QR-2.png")}
+            color="#00D084"
+            shadowColor="rgba(0, 208, 132, 0.6)"
+            instructions={[
+              "Return the ID card if lost or found to your nearest Air Force Station.",
+              "The card is only applicable for the personnel's only and their dependents.",
+              "A valid government ID proof must be shown with this card."
+            ]}
+          />
+
+          <CACCard
+            title="Canteen Store Department"
+            name="Rishabh Tripathi"
+            dept="Cargo"
+            desig="First Officer"
+            idLabel="Card No."
+            idValue="573DF5G25S"
+            qrUrl="https://i.ibb.co/RGTWW4Qj/QR-3.png"
+            dob="12/05/1998"
+            bloodGroup="B+"
+            validTill="PERPETUAL"
+            issuedAt="CSD Headquarters"
+            onPressQr={() => handleQrPress("https://i.ibb.co/RGTWW4Qj/QR-3.png")}
+            color="#F59E0B"
+            shadowColor="rgba(245, 158, 11, 0.6)"
+            instructions={[
+              "Return the ID card if lost or found to your nearest Air Force Station.",
+              "It has limit of ₹8,700.55 / month to spent your base's CSD only.",
+              "Commercial use and outer state use not bounded under your operating base is strictly prohibited."
+            ]}
+          />
         </Animated.View>
 
         {/* Footer */}
@@ -540,6 +837,29 @@ export default function Index() {
             style={styles.expandedImage}
             resizeMode="contain"
           />
+        </TouchableOpacity>
+      </Modal>
+
+      {/* QR Code Expansion Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={qrModalVisible}
+        onRequestClose={() => setQrModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.qrModalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setQrModalVisible(false)}
+        >
+          <View style={styles.qrModalContent}>
+            <Image
+              source={{ uri: selectedQrUrl }}
+              style={styles.expandedQr}
+              resizeMode="contain"
+            />
+            <Text style={styles.qrModalCloseText}>Tap anywhere to close</Text>
+          </View>
         </TouchableOpacity>
       </Modal>
 
@@ -1556,5 +1876,302 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: '#38BDF8',
+  },
+  // New Health Styles
+  dynamicHealthSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  healthRingsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  healthRingsLegend: {
+    marginTop: 10,
+    gap: 4,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 9,
+    color: '#94A3B8',
+  },
+  healthStatsContainer: {
+    flex: 1,
+    gap: 8,
+  },
+  healthStatText: {
+    color: '#94A3B8',
+    fontSize: 13,
+  },
+  healthStatValue: {
+    color: '#F1F5F9',
+    fontWeight: 'bold',
+  },
+  healthGrid: {
+    flexDirection: 'row',
+    gap: 15,
+    marginVertical: 4,
+  },
+  healthGridItem: {
+    backgroundColor: 'rgba(56, 189, 248, 0.05)',
+    padding: 8,
+    borderRadius: 10,
+    flex: 1,
+  },
+  healthGridLabel: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  healthGridValue: {
+    color: '#F1F5F9',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  // CAC Card Styles
+  cacSection: {
+    marginTop: 40,
+    marginHorizontal: 10,
+    marginBottom: 30,
+  },
+  cacSectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#38BDF8',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  cacSubtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginBottom: 25,
+    marginTop: 5,
+  },
+  cacCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 2,
+    elevation: 15,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cacBgGlow: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(56, 189, 248, 0.05)',
+  },
+  cacWatermark: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    bottom: -50,
+    right: -50,
+    opacity: 0.08,
+    transform: [{ rotate: '-20deg' }],
+  },
+  cacInnerBorder: {
+    position: 'absolute',
+    top: 5,
+    left: 5,
+    right: 5,
+    bottom: 5,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  cacGloss: {
+    position: 'absolute',
+    top: -100,
+    left: -100,
+    width: '200%',
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    transform: [{ rotate: '45deg' }],
+  },
+  cacHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    paddingBottom: 10,
+    zIndex: 1,
+  },
+  headerLogoBg: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 6,
+    padding: 2,
+  },
+  cacLogoSmall: {
+    width: 30,
+    height: 30,
+  },
+  cacTitleContainer: {
+    alignItems: 'center',
+  },
+  cacHeaderText: {
+    color: '#F1F5F9',
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  cacHeaderHindi: {
+    color: '#94A3B8',
+    fontSize: 10,
+  },
+  cacTypeTitle: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    textTransform: 'uppercase',
+  },
+  cacBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cacProfileImg: {
+    width: 70,
+    height: 90,
+    borderRadius: 8,
+    borderWidth: 2,
+  },
+  cacDataSection: {
+    flex: 1,
+  },
+  cacDataItem: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 2,
+  },
+  cacDataLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  cacDataValue: {
+    color: '#F1F5F9',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  cacQrCode: {
+    width: 60,
+    height: 60,
+    backgroundColor: 'white',
+    borderRadius: 4,
+  },
+  cacFooter: {
+    marginTop: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  cacInstTitle: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  cacInstText: {
+    color: '#94A3B8',
+    fontSize: 9,
+    lineHeight: 12,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  tapToZoom: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  cacExtraInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    paddingHorizontal: 5,
+  },
+  cacExtraItem: {
+    gap: 2,
+  },
+  cacExtraLabel: {
+    color: '#38BDF8',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  cacExtraValue: {
+    color: '#F1F5F9',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  signatureContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
+  },
+  signatureLine: {
+    width: 100,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginBottom: 4,
+  },
+  signatureLabel: {
+    color: '#94A3B8',
+    fontSize: 8,
+    fontStyle: 'italic',
+  },
+  signatureImage: {
+    width: 90,
+    height: 40,
+    marginBottom: -15,
+    marginRight: 10,
+  },
+  qrModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrModalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  expandedQr: {
+    width: 250,
+    height: 250,
+  },
+  qrModalCloseText: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 15,
   },
 });

@@ -15,6 +15,30 @@ interface Mission {
   status: 'scheduled' | 'in-progress' | 'completed';
 }
 
+const HOLIDAYS: Record<string, string> = {
+  '1-26': 'Republic Day',
+  '3-8': 'Maha Shivaratri',
+  '3-25': 'Holi',
+  '3-29': 'Good Friday',
+  '4-11': 'Id-ul-Fitr',
+  '4-14': 'Ambedkar Jayanti',
+  '4-17': 'Ram Navami',
+  '4-21': 'Mahavir Jayanti',
+  '5-23': 'Buddha Purnima',
+  '6-17': 'Id-ul-Zuha',
+  '7-17': 'Muharram',
+  '8-15': 'Independence Day',
+  '8-26': 'Janmashtami',
+  '9-16': 'Milad-un-Nabi',
+  '10-2': 'Gandhi Jayanti',
+  '10-12': 'Dussehra',
+  '10-31': 'Diwali',
+  '11-15': 'Guru Nanak Jayanti',
+  '12-25': 'Christmas',
+};
+
+const getHoliday = (day: number, month: number) => HOLIDAYS[`${month}-${day}`];
+
 export default function MissionsPage() {
   const [currentDate, setCurrentDate] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -232,7 +256,7 @@ export default function MissionsPage() {
                   selectedMonth.getMonth() === new Date().getMonth() &&
                   selectedMonth.getFullYear() === new Date().getFullYear();
               
-              const isHoliday = day ? getHoliday(day) : false;
+              const isHoliday = day ? getHoliday(day, selectedMonth.getMonth() + 1) : false;
 
               return (
                 <View
@@ -265,65 +289,105 @@ export default function MissionsPage() {
           <Text style={styles.sectionTitle}>Upcoming Missions</Text>
 
           <View style={styles.missionsGrid}>
-            {missions.map((mission, index) => (
-              <Animated.View key={mission.id} entering={FadeInDown.delay(index * 100).duration(500)} style={styles.missionCard}>
-                <View style={styles.missionHeaderRow}>
-                  <View style={styles.missionIdSection}>
-                    <Text style={styles.missionId}>{mission.id}</Text>
-                    <Text style={styles.missionType}>{mission.type}</Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { borderColor: getStatusColor(mission.status) },
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={getStatusIcon(mission.status)}
-                      size={16}
-                      color={getStatusColor(mission.status)}
-                    />
-                    <Text style={[styles.statusText, { color: getStatusColor(mission.status) }]}>
-                      {mission.status.charAt(0).toUpperCase() + mission.status.slice(1)}
-                    </Text>
-                  </View>
-                </View>
+            {missions.map((mission, index) => {
+              const [d, m] = mission.date.split('/').map(Number);
+              const holidayName = getHoliday(d, m);
 
-                <View style={styles.missionRoute}>
-                  <MaterialCommunityIcons name="map-marker" size={18} color="#38BDF8" />
-                  <Text style={styles.routeText}>
-                    {mission.origin} → {mission.destination}
-                  </Text>
-                </View>
+              return (
+                <Animated.View key={mission.id} entering={FadeInDown.delay(index * 100).duration(500)} style={[styles.missionCard, holidayName ? styles.restDayCard : null]}>
+                  {holidayName ? (
+                    <View>
+                      <View style={styles.missionHeaderRow}>
+                        <View style={styles.missionIdSection}>
+                          <Text style={[styles.missionId, { color: '#FF4D4D' }]}>DUTY OFF</Text>
+                          <Text style={styles.missionType}>Rest Day / Gazetted Holiday</Text>
+                        </View>
+                        <View style={[styles.statusBadge, { borderColor: '#FF4D4D' }]}>
+                          <MaterialCommunityIcons name="home-heart" size={16} color="#FF4D4D" />
+                          <Text style={[styles.statusText, { color: '#FF4D4D' }]}>Relaxing</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.missionRoute}>
+                        <MaterialCommunityIcons name="palm-tree" size={18} color="#FF4D4D" />
+                        <Text style={[styles.routeText, { color: '#F1F5F9' }]}>
+                          Holiday: {holidayName}
+                        </Text>
+                      </View>
 
-                <View style={styles.missionDetails}>
-                  <View style={styles.detailItem}>
-                    <MaterialCommunityIcons name="calendar" size={16} color="#38BDF8" />
-                    <Text style={styles.detailText}>{mission.date}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <MaterialCommunityIcons name="clock-outline" size={16} color="#38BDF8" />
-                    <Text style={styles.detailText}>{mission.time}</Text>
-                  </View>
-                </View>
+                      <View style={styles.missionDetails}>
+                        <View style={styles.detailItem}>
+                          <MaterialCommunityIcons name="calendar-star" size={16} color="#FF4D4D" />
+                          <Text style={styles.detailText}>{mission.date}</Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <MaterialCommunityIcons name="timer-off-outline" size={16} color="#FF4D4D" />
+                          <Text style={styles.detailText}>No Flying Scheduled</Text>
+                        </View>
+                      </View>
+                    </View>
+                  ) : (
+                    <View>
+                      <View style={styles.missionHeaderRow}>
+                        <View style={styles.missionIdSection}>
+                          <Text style={styles.missionId}>{mission.id}</Text>
+                          <Text style={styles.missionType}>{mission.type}</Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            { borderColor: getStatusColor(mission.status) },
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name={getStatusIcon(mission.status)}
+                            size={16}
+                            color={getStatusColor(mission.status)}
+                          />
+                          <Text style={[styles.statusText, { color: getStatusColor(mission.status) }]}>
+                            {mission.status.charAt(0).toUpperCase() + mission.status.slice(1)}
+                          </Text>
+                        </View>
+                      </View>
 
-                <View style={styles.cargoSection}>
-                  <View style={styles.cargoItem}>
-                    <MaterialCommunityIcons name="package-variant" size={16} color="#38BDF8" />
-                    <Text style={styles.cargoType}>{mission.cargo}</Text>
-                  </View>
-                  <View style={styles.weightBadge}>
-                    <MaterialCommunityIcons name="weight" size={14} color="#ffffff" />
-                    <Text style={styles.weightText}>{mission.weight}</Text>
-                  </View>
-                </View>
+                      <View style={styles.missionRoute}>
+                        <MaterialCommunityIcons name="map-marker" size={18} color="#38BDF8" />
+                        <Text style={styles.routeText}>
+                          {mission.origin} → {mission.destination}
+                        </Text>
+                      </View>
 
-                <TouchableOpacity style={styles.detailsButton}>
-                  <Text style={styles.detailsButtonText}>View Details</Text>
-                  <MaterialCommunityIcons name="chevron-right" size={16} color="#0a0f1a" />
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
+                      <View style={styles.missionDetails}>
+                        <View style={styles.detailItem}>
+                          <MaterialCommunityIcons name="calendar" size={16} color="#38BDF8" />
+                          <Text style={styles.detailText}>{mission.date}</Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <MaterialCommunityIcons name="clock-outline" size={16} color="#38BDF8" />
+                          <Text style={styles.detailText}>{mission.time}</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.cargoSection}>
+                        <View style={styles.cargoItem}>
+                          <MaterialCommunityIcons name="package-variant" size={16} color="#38BDF8" />
+                          <Text style={styles.cargoType}>{mission.cargo}</Text>
+                        </View>
+                        <View style={styles.weightBadge}>
+                          <MaterialCommunityIcons name="weight" size={14} color="#ffffff" />
+                          <Text style={styles.weightText}>{mission.weight}</Text>
+                        </View>
+                      </View>
+
+                      <TouchableOpacity style={styles.detailsButton}>
+                        <Text style={styles.detailsButtonText}>View Details</Text>
+                        <MaterialCommunityIcons name="chevron-right" size={16} color="#0a0f1a" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </Animated.View>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -616,5 +680,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: '#0a0f1a',
+  },
+  restDayCard: {
+    borderColor: 'rgba(255, 77, 77, 0.3)',
+    backgroundColor: 'rgba(255, 77, 77, 0.05)',
   },
 });

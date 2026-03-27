@@ -15,7 +15,7 @@ const LeaveChart = ({ available, total, color, label }: { available: number, tot
 
   useEffect(() => {
     progress.value = withTiming(available / total, { duration: 1500 });
-  }, []);
+  }, [available, total]);
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference - progress.value * circumference,
