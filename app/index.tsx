@@ -414,7 +414,7 @@ export default function Index() {
               </View>
               <View style={styles.mentorInfo}>
                  <Image
-                source={{ uri: 'https://www.bharat-rakshak.com/indianairforce/images/officers/22920.jpg' }}
+                source={{ uri: 'https://www.bharat-rakshak.com/indianairforce/images/officers/more/22920AC.jpg' }}
                 style={styles.mentorImage}
                 resizeMode="cover"
               />
