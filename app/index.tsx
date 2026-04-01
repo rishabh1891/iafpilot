@@ -266,13 +266,19 @@ export default function Index() {
     const steps = Math.floor(Math.random() * (10000 - 4000 + 1)) + 4000;
     const speed = parseFloat((Math.random() * (3 - 1) + 1).toFixed(1));
     const stairs = Math.floor(Math.random() * (4 - 3 + 1)) + 3;
+
+    // Generate random sleep up to 7hr 30min (450 minutes)
+    const sleepMinutes = Math.floor(Math.random() * 451);
+    const hrs = Math.floor(sleepMinutes / 60);
+    const mins = sleepMinutes % 60;
+    const sleepStr = `${String(hrs).padStart(2, '0')}hr ${String(mins).padStart(2, '0')}m`;
     
     setHealthData({
       steps,
       speed,
       stairs,
-      sleep: "05hr 28m",
-      condition: steps < 4500 ? "Lazy" : "Fit"
+      sleep: sleepStr,
+      condition: sleepMinutes < 180 ? "Lazy" : "Fit"
     });
   };
 
